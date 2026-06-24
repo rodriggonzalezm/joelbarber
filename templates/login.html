@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<section class="auth"><span class="eyebrow">ACCESO AL EQUIPO</span><h1>La agenda,<br>bajo control.</h1><form method="post">{% csrf_token %}{{form.as_p}}<button class="btn copper full">Ingresar</button></form><small>¿Es la primera vez? <a href="{% url 'setup' %}">Activar sistema.</a></small></section>{% endblock %}

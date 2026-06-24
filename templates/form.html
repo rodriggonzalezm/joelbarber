@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<section class="auth"><a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}">← Volver</a><h1>{{title}}</h1><form method="post">{% csrf_token %}{{form.as_p}}<button class="btn copper full">{{button}}</button></form></section>{% endblock %}

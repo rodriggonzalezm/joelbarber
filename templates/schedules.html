@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Horarios · Joel Barber{% endblock %}
+
+{% block content %}
+<header class="panel-head">
+  <div>
+    <span class="eyebrow">HORARIOS</span>
+    <h1>{% if is_owner %}Agenda del equipo.{% else %}Mis horarios.{% endif %}</h1>
+    <p>Profesional: <strong>{{ selected_barber.display_name }}</strong></p>
+  </div>
+  <a class="btn copper" href="{% url 'dashboard' %}">Ver agenda</a>
+</header>
+
+{% if is_owner %}
+<section class="day-summary">
+  <p>Seleccioná un profesional para revisar o modificar sus horarios.</p>
+  <form method="get">
+    <select name="barber" onchange="this.form.submit()">
+      {% for b in barbers %}
+        <option value="{{ b.pk }}" {% if b.pk == selected_barber.pk %}selected{% endif %}>{{ b.display_name }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</section>
+{% endif %}
+
+<section class="appointment-grid">
+  <article class="detail-card">
+    <h2>Horario actual</h2>
+    <div class="schedule-list">
+      {% for row in rows %}
+        <div class="schedule-row">
+          <strong>{{ row.label }}</strong>
+          {% if row.schedule %}
+            <span>
+              {{ row.schedule.start_time|time:'H:i' }} a {{ row.schedule.end_time|time:'H:i' }}
+              {% if not row.schedule.active %} · Inactivo{% endif %}
+            </span>
+          {% else %}
+            <span>Sin horario cargado</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="detail-card">
+    <h2>Agregar o modificar</h2>
+    <p>Elegí el día y guardá el rango horario. Si el día ya existe, se actualiza.</p>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button class="btn copper full">Guardar horario</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

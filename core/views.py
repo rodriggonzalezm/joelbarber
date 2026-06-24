@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError,transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404,redirect,render
-from .forms import AppointmentStatusForm,BookingForm,ServiceForm,SetupForm,StaffForm
+from .forms import AppointmentStatusForm,BookingForm,ServiceForm,SetupForm,StaffForm,WorkScheduleForm
 from .models import Appointment,Barber,Service,Shop,WorkSchedule
 from .utils import available_slots
 
@@ -79,6 +79,55 @@ def staff_create(request):
         for day in range(6):WorkSchedule.objects.create(barber=b,weekday=day,start_time=time(10),end_time=time(20))
         messages.success(request,"Profesional agregado con agenda propia.");return redirect("staff_list")
     return render(request,"form.html",{"form":form,"title":"Agregar profesional","button":"Crear acceso"})
+
+@login_required
+def schedule_list(request):
+    me=request.user.barber
+    s=me.shop
+    is_owner=me.is_owner
+
+    if is_owner:
+        selected_id=request.POST.get("barber") or request.GET.get("barber")
+        selected_barber=s.barbers.filter(pk=selected_id).first() if selected_id else me
+    else:
+        selected_barber=me
+
+    form=WorkScheduleForm(
+        request.POST or None,
+        shop=s,
+        current_barber=me,
+        is_owner=is_owner,
+        initial={"barber":selected_barber,"active":True},
+    )
+
+    if request.method=="POST" and form.is_valid():
+        target=form.get_barber()
+        if not is_owner and target!=me:
+            return redirect("dashboard")
+        WorkSchedule.objects.update_or_create(
+            barber=target,
+            weekday=form.cleaned_data["weekday"],
+            defaults={
+                "start_time":form.cleaned_data["start_time"],
+                "end_time":form.cleaned_data["end_time"],
+                "active":form.cleaned_data["active"],
+            },
+        )
+        messages.success(request,"Horario guardado correctamente.")
+        return redirect(f"{request.path}?barber={target.pk}" if is_owner else request.path)
+
+    schedules_by_day={x.weekday:x for x in selected_barber.schedules.all()}
+    rows=[]
+    for value,label in WorkSchedule.DAYS:
+        rows.append({"weekday":value,"label":label,"schedule":schedules_by_day.get(value)})
+
+    return render(request,"schedules.html",{
+        "form":form,
+        "rows":rows,
+        "selected_barber":selected_barber,
+        "barbers":s.barbers.filter(active=True).order_by("display_name"),
+        "is_owner":is_owner,
+    })
 
 @login_required
 def service_list(request):

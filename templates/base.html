@@ -31,7 +31,6 @@
         {% if user.barber.is_owner %}
           <a href="{% url 'staff_list' %}">Equipo</a>
           <a href="{% url 'service_list' %}">Servicios</a>
-          <a href="{% url 'finance_dashboard' %}">Finanzas</a>
         {% endif %}
 
         <form class="inline" method="post" action="{% url 'logout' %}">
